@@ -14,6 +14,7 @@
 		8CE6EA2129E5D1DB002D4129 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CE6EA1F29E5D1DB002D4129 /* Main.storyboard */; };
 		8CE6EA2329E5D1DC002D4129 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8CE6EA2229E5D1DC002D4129 /* Assets.xcassets */; };
 		8CE6EA2629E5D1DC002D4129 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CE6EA2429E5D1DC002D4129 /* LaunchScreen.storyboard */; };
+		8CF5018929EA044E0017B91C /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8CF5018829EA044E0017B91C /* CoreTelephony.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +28,7 @@
 		8CE6EA2229E5D1DC002D4129 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8CE6EA2529E5D1DC002D4129 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8CE6EA2729E5D1DC002D4129 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		8CF5018829EA044E0017B91C /* CoreTelephony.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreTelephony.framework; path = System/Library/Frameworks/CoreTelephony.framework; sourceTree = SDKROOT; };
 		C290A6C5BD1DE61AA3BAB9BC /* Pods_articula_app.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_articula_app.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -35,6 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8CF5018929EA044E0017B91C /* CoreTelephony.framework in Frameworks */,
 				2C34924C7C77BAB3CE1B990E /* Pods_articula_app.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -45,6 +48,7 @@
 		51BE9AB6A544BD87E9FEE288 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				8CF5018829EA044E0017B91C /* CoreTelephony.framework */,
 				C290A6C5BD1DE61AA3BAB9BC /* Pods_articula_app.framework */,
 			);
 			name = Frameworks;
@@ -306,7 +310,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -360,7 +364,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;

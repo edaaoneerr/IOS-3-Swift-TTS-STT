@@ -17,7 +17,6 @@ class ViewController: UIViewController {
     @IBOutlet weak var userIdField: UITextField!
     @IBOutlet weak var tokenField: UITextField!
     @IBOutlet weak var remoteUserIdField: UITextField!
-    @IBOutlet weak var textField: UITextField!
     @IBOutlet weak var logView: UITextView!
     @IBOutlet weak var joinButton: UIButton!
     @IBOutlet weak var volumeSlider: UISlider!
@@ -26,16 +25,21 @@ class ViewController: UIViewController {
     // Volume Control
     var volume: Int = 50
     var isMuted: Bool = false
-    var remoteUid: UInt = 0 // Stores the uid of the remote user
+    var remoteUid: UInt = 0
+    // Stores the uid of the remote user
     
            var joined: Bool = false {
            didSet {
                DispatchQueue.main.async {
                    self.joinButton.setTitle( self.joined ? "Leave" : "Join", for: .normal)
+                   
                }
+               
            }
        }
     
+    var isLoggedIn: Bool = false
+    var senderUser: String = ""
  
     private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
     var agoraEngine: AgoraRtcEngineKit!
@@ -63,44 +67,90 @@ class ViewController: UIViewController {
     
     
     @IBAction func joinClicked(_ sender: Any) {
-        
-        
-        
-        if userIdField.text != "" || remoteUserIdField.text != "" {
-            self.loginAction {
-                if !self.joined {
-                   /* sender.isEnabled = false */
-                    DispatchQueue.global(qos: .userInitiated).async {
-                        print("starting STT")
-                        if self.audioEngine.isRunning {
-                            self.audioEngine.stop()
-                            self.recognitionRequest?.endAudio()
-                            print("Start Recording")
-        //                    self.btnStart.isEnabled = false
-        //                    self.btnStart.setTitle("Start Recording", for: .normal)
-                        } else {
-                            try? self.startRecording()
-                            print("Stop Recording")
-        //                    self.btnStart.setTitle("Stop Recording", for: .normal)
-                        }
-                        Task {
-
-                            await self.joinChannel()
-                          //  sender.isEnabled = true
-                        }
+                
+        if isLoggedIn && remoteUserIdField.text != "" {
+            if !self.joined {
+                DispatchQueue.global(qos: .userInitiated).async {
+                    if self.audioEngine.isRunning {
+                        self.audioEngine.stop()
+                        self.recognitionRequest?.endAudio()
+                        
+                    } else {
+                        
+                        try? self.startRecording()
+                        
                     }
-                    
-                    
-                    
-                } else {
-                    self.logoutAction()
-                    self.leaveChannel()
+                    Task {
+                        await self.joinChannel()
+                        
+                    }
                 }
-
             }
+            else {
+                self.leaveChannel()
+                if self.audioEngine.isRunning {
+                    self.audioEngine.stop()
+                    self.recognitionRequest?.endAudio()
+                }
+            }
+
         }
         else{
             showMessage(title: "Enter User ID", text: "Please Enter Correct User ID")
+            
+        }
+        
+}
+    
+    
+    
+    @IBAction func loginClicked(_ sender: Any) {
+        guard let userId = self.userIdField.text,
+              let token = self.tokenField.text else {
+            self.printLog("userId or token is empty")
+            return
+        }
+        let err = AgoraChatClient.shared.login(withUsername: userId, agoraToken: token)
+        if err == nil {
+            self.isLoggedIn = true
+            self.printLog("login success")
+            
+        } else {
+            self.printLog("login failed:\(err?.errorDescription ?? "")")
+        }
+        
+    }
+    
+    
+    @IBAction func logoutClicked(_ sender: Any) {
+        AgoraChatClient.shared.logout(false) { err in
+            if err == nil {
+                self.isLoggedIn = false
+            }
+        }
+        
+    }
+    
+    
+    
+    @IBAction func sendClicked(_ sender: Any) {
+        guard let remoteUser = remoteUserIdField.text,
+              let text = msgToSend,
+              let currentUserName = AgoraChatClient.shared.currentUsername else {
+            print("Not login or remoteUser/text is empty")
+            return
+        }
+        let msg = AgoraChatMessage(
+            conversationId: remoteUser, from: currentUserName,
+            to: remoteUser, body: .text(content: text), ext: nil
+        )
+        senderUser = currentUserName
+        AgoraChatClient.shared.chatManager?.send(msg, progress: nil) { msg, err in
+            if let err = err {
+                print("send msg error.\(err.errorDescription ?? "Error occured")")
+            } else {
+                print("send msg success")
+            }
         }
         
     }
@@ -113,17 +163,20 @@ class ViewController: UIViewController {
     
     
     @IBAction func volumeSliderChanged(_ sender: UISlider) {
-        volume = Int(sender.value)
-        print("Changing volume to \(volume)")
+        volume = Int(sender.value * 100)
+        printLog("Volume changes to: \(volume)")
         agoraEngine.adjustAudioMixingVolume(volume)
     }
     
     
     @IBAction func muteTapped(_ sender: UISwitch) {
         isMuted = sender.isOn
-        print("Changing mute state to \(isMuted)")
+        self.printLog("Changing mute state to \(isMuted)")
         agoraEngine.muteRemoteAudioStream(remoteUid, mute: isMuted)
     }
+    
+    
+    
     
     
     
@@ -141,7 +194,7 @@ extension ViewController{
         speak("Hello! Do I know you?")
         
         self.userIdField.text = "edaaoneerr"
-        self.tokenField.text = "007eJxTYBDQ/BzgfLF4nv/6yieLC9TPcc2NOtNy/k0gi4yEKM/jpz0KDAamZgYmqUaWlmaJxiZpqYmWxkbGhubmxhamBhZJRqnmJrzmKQ2BjAzhDRrMjAwQCOKzM4Sn5iTn56YyMAAAHvsdgg=="
+        self.tokenField.text = "007eJxTYJDm0nRfH/Uh5Nfz1UnGp3c2zWvUcLdXmLj2+e+/LLfvM+xVYDAwNTMwSTWytDRLNDZJS020NDYyNjQ3N7YwNbBIMko1V1G3TGkIZGSIvybNwsjAysAIhCC+CoOlmYVlYlqigW6KhYWhrqFhaopuoplZmq6hsblJalpiSpqppTkAOv4mbg=="
 
         SFSpeechRecognizer.requestAuthorization { authStatus in
             switch authStatus {
@@ -162,8 +215,7 @@ extension ViewController{
         
         let tap = UITapGestureRecognizer(target: self, action: #selector(UIInputViewController.dismissKeyboard))
 
-        //Uncomment the line below if you want the tap not not interfere and cancel other interactions.
-        //tap.cancelsTouchesInView = false
+       
         let session = AVAudioSession.sharedInstance()
         do {
             try session.setCategory(.playAndRecord, mode: .default, options: [.mixWithOthers, .duckOthers])
@@ -175,8 +227,15 @@ extension ViewController{
         
     }
     
-   
-    
+    func printLog(_ items: Any..., separator: String = " ", terminator: String = "\n") {
+        let message = items.map { "\($0)" }.joined(separator: separator)
+        DispatchQueue.main.async {
+            self.logView.text = ""
+            self.logView.text.append("\(message)\(terminator)")
+            let bottom = NSMakeRange(self.logView.text.count - 1, 1)
+            self.logView.scrollRangeToVisible(bottom)
+        }
+    }
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         leaveChannel()
@@ -248,64 +307,17 @@ extension ViewController{
 
     func leaveChannel() {
         let result = agoraEngine.leaveChannel(nil)
+        self.printLog("User left the channel: \(self.userIdField.text!)")
         // Check if leaving the channel was successful and set joined Bool accordingly
-        if result == 0 { joined = false }
-    }
-
-    
-    
-}
-
-//MARK: - Agora Chat
-extension ViewController{
-    func loginAction(completion: @escaping ()->()) {
-        guard let userId = self.userIdField.text,
-              let token = self.tokenField.text else {
-            print("userId or token is empty")
-            return
-        }
-        let err = AgoraChatClient.shared.login(withUsername: userId, agoraToken: token)
-        if err == nil {
-            print("login success")
-            completion()
+        if result == 0 {
+            joined = false
             
-        } else {
-            print("login failed:\(err?.errorDescription ?? "")")
         }
     }
+
     
-    func logoutAction() {
-        AgoraChatClient.shared.logout(false) { err in
-            if err == nil {
-                print("logout success")
-            }
-        }
-    }
-    
-    // Sends a text message.
-    func sendAction() {
-        print("userid: \(remoteUserIdField.text ?? "1")", "msg: \(msgToSend ?? "Hello")")
-        guard let remoteUser = remoteUserIdField.text,
-              let text = msgToSend,
-              let currentUserName = AgoraChatClient.shared.currentUsername else {
-            print("Not login or remoteUser/text is empty")
-            return
-        }
-        let msg = AgoraChatMessage(
-            conversationId: remoteUser, from: currentUserName,
-            to: remoteUser, body: .text(content: text), ext: nil
-        )
-        AgoraChatClient.shared.chatManager?.send(msg, progress: nil) { msg, err in
-            if let err = err {
-                print("send msg error.\(err.errorDescription ?? "Error occured")")
-            } else {
-                print("send msg success")
-            }
-        }
-    }
     
 }
-
 
 //MARK: - STT and TTS
 extension ViewController{
@@ -320,25 +332,21 @@ extension ViewController{
 
         recognitionRequest.shouldReportPartialResults = true
 
-        var recognitionTask: SFSpeechRecognitionTask?
 
         recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest, resultHandler: { result, error in
             var isFinal = false
 
             if let result = result {
                 let transcription = result.bestTranscription.formattedString
-                print(transcription)
-                
                 self.msgToSend = transcription
                 self.logView.text = self.msgToSend
-                self.sendAction()
                 isFinal = result.isFinal
             }
 
             if error != nil || isFinal {
                 self.audioEngine.stop()
                 inputNode.removeTap(onBus: 0)
-                recognitionTask = nil
+                self.recognitionTask = nil
             }
         })
 
@@ -387,6 +395,8 @@ extension ViewController{
         let deadlineTime = DispatchTime.now() + .seconds(delay)
         DispatchQueue.main.asyncAfter(deadline: deadlineTime, execute: {
             let alert = UIAlertController(title: title, message: text, preferredStyle: .alert)
+            let ok = UIAlertAction(title: "OK", style: .default)
+            alert.addAction(ok)
             self.present(alert, animated: true)
             alert.dismiss(animated: true, completion: nil)
         })
@@ -407,21 +417,23 @@ extension ViewController: AgoraChatManagerDelegate{
     func messagesDidReceive(_ aMessages: [AgoraChatMessage]) {
         
         for msg in aMessages {
-            print("msg body type: \(msg.body)")
             switch msg.swiftBody {
             case let .text(content):
-                print("receive text msg,content: \(content)")
-                self.textField.text = content
-                print("speaking...")
+                self.printLog("""
+                              Messages:
+                              
+                              \(self.senderUser):
+                              \(content)
+                              """)
                 self.speak(content)
-                
-                
             default:
                 break
             }
         }
     }
+    
 }
+
 
 //MARK: - SFSpeechRecognizerDelegate
 extension ViewController: SFSpeechRecognizerDelegate{
